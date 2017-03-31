@@ -55,15 +55,20 @@ class orders:
         q = orders.get()
         for every in q:
             if q[every][1].split('/')[0] != q[every][1].split('/')[1]:
-                zak[every] = q[every]
-        return zak
+                zak[every] = '%s;%s' % (q[every][0],q[every][1])
+        writecfg('orders.hs',zak,False)
+        return orders.get()
 
 
 hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
 global dev_id
-dev_id = ''  # id устройства
-types = ['like', 'fun', 'group', 'like']
+global sex
 global key_
+global country
+dev_id = ''  # id устройства
+types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
+sex = ['', 'girl', 'boy', '']
+country = ['', 'All', 'Ukraine', 'Russia', 'BY', 'Москва']
 
 
 def reg_user(vk_id_rand):  # Регистрация пользователя
@@ -115,35 +120,40 @@ def get_promo(vk_id_rand, code):  # Активация промокода.
         return True
 
 
-def add_task(vk_id, target_id, count, type, arg=''):  # Добавление задания
+def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age = ''):  # Добавление задания
     global key_
+    url = ['https://vk.com/id%s?z=photo%s_%s' % (target_id, target_id, arg),
+           'https://vk.com/id%s' % target_id,
+           'https://vk.com/public%s' % arg,
+           'https://vk.com/wall%s_%s' % (target_id, arg),
+           'https://vk.com/wall%s_%s' % (target_id, arg)]
     messages = {
-        'like': 'Задание на %s лайков на эту фотографию активировано! Спасибо за использование . За информацией '
-                'напишите ему : vk.com/hottabbe' % count,
+        'like_photo': 'Задание на %s лайков на эту фотографию активировано! Спасибо за использование . За информацией '
+                      'напишите ему : vk.com/hottabbe' % count,
+        'like_post': 'Задание на %s лайков на этот пост активировано! Спасибо за использование . За информацией '
+                     'напишите ему : vk.com/hottabbe' % count,
+        'like_comment': 'Задание на %s лайков на комментарий vk.com/wall%s_%s активировано! Спасибо за использование . За информацией '
+                        'напишите ему : vk.com/hottabbe' % (count, target_id, arg),
         'fun': 'Задание на %s подписчиков активировано! Спасибо за использование. За информацией напишите ему : '
                'vk.com/hottabbe' % count,
         'group': 'Задание на %s подписчиков в группу vk.com/public%s активировано! Спасибо за использование. За '
                  'информацией напишите ему : vk.com/hottabbe' % (count, arg)}
-    url = ['https://vk.com/id%s?z=photo%s_%s' % (target_id, target_id, arg),
-           'https://vk.com/id%s' % target_id,
-           'https://vk.com/public%s' % arg,
-           'https://vk.com/wall%s_%s' % (target_id, arg)]
     url = url[type]
     type = types[type]
     args = {
         "hesh_access": hash_access,
         "social": "vk",
-        "type": type,
+        "type": type.split('_')[0],
         "url": url,
         "order_rate": "4",
-        "country_name": "All",
+        "country_name": country,
         "like_count": count,
-        "male": "",
+        "male": sex,
         "description": "vkandroidfree",
-        "external_user_id": vk_id
+        "external_user_id": vk_id,
+        "age": age
     }
     r = requests.post('http://api.roboliker.ru/api/create_order', json=args)
-    print(r.text)
     if 'id' in r.json():
         order_id = r.json()['id']
 
@@ -164,7 +174,17 @@ def add_task(vk_id, target_id, count, type, arg=''):  # Добавление з�
 
         if activate_order(vk_id, order_id) is True:
             try:
-                api.messages.send(user_id=target_id, message=messages[type])
+                try:
+                    if type.split('_')[1] == 'photo':
+                        api.messages.send(user_id=target_id, message=messages[type],
+                                          attachment='photo%s_%s' % (target_id, arg))
+                    elif type.split('_')[1] == 'post':
+                        api.messages.send(user_id=target_id, message=messages[type],
+                                          attachment='post%s_%s' % (target_id, arg))
+                    elif type.split('_')[1] == 'comment':
+                        api.messages.send(user_id=target_id, message=messages[type])
+                except IndexError:
+                    api.messages.send(user_id=target_id, message=messages[type])
             except:
                 pass
             orders.add(order=r, tip=type, target='vk.com/id%s' % target_id)
@@ -196,7 +216,7 @@ def enter():
     return key_
 
 
-def force_add(count, target_id, type, arg):
+def force_add(count, target_id, type, arg, sex, country,age):
     global dev_id
     while True:
         vk_id = str(random.randint(1, 999999999))
@@ -205,7 +225,12 @@ def force_add(count, target_id, type, arg):
             break
     print('2. Получаю промо-код для пользователя ID %s' % vk_id, True, 1)
     vars_ = list(auth_user(vk_id))
-    cycles = int(count) * 8
+    factor = 8
+    if sex == '':
+        factor += 1
+    if country == 'All':
+        factor += 1
+    cycles = int(count) * factor
     print('3. Накручиваю баланс для добавления задания (Необходимо %s коинов)\n' % cycles, True, 1)
     vars_[0] = int(vars_[0])
     vars_[2] = int(vars_[2])
@@ -221,11 +246,10 @@ def force_add(count, target_id, type, arg):
             print('Накручено %s из %s. Осталось примерно %s:%s:%s' % (vars_[0], cycles, int(h), int(m), int(s)), False,
                   4)
     print('4. Добавляю задание....', False, 1)
-    if add_task(vk_id, target_id, count, type, arg):
+    if add_task(vk_id, target_id, count, type, arg,sex,country,age):
         print('УСПЕШНО!\a', True, 1)
         return True
     else:
-        input('dfdh')
         print('Неудача,повтор попытки.....', True, clr=True, color=0)
         force_add(count, target_id, type, arg)
 
@@ -263,6 +287,7 @@ def get_orders():
 
 
 def main_vk():  # Основная функция.
+    global sex, country
     print('Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n', False,
           4, True, frame=True)
     opt = int(input('--> ', '1234'))
@@ -270,7 +295,7 @@ def main_vk():  # Основная функция.
         vk_id = input('\nВведите ваш ID ВК: ', '1234567890')
         balance, code, promo_count = auth_user(vk_id)
         print('\nНа вашем балансе %s баллов.\nПромокод: %s\nБаллов за одного друга: %s\n\n' % (
-        balance, code, promo_count))
+            balance, code, promo_count))
         cycles = int((int(input('До какого баланса докрутить? \n --> ', '1234567890')) - int(balance)) / promo_count)
         for i in range(cycles + 1):
             time_ = time.time()
@@ -282,24 +307,35 @@ def main_vk():  # Основная функция.
                 m = s // 60
                 s = s % 60
                 print('%s +%s монет. Текущий баланс %s монет. Осталось примерно %s:%s:%s    ' % (
-                time.strftime('[%H:%M:%S]'), promo_count, balance, int(h), int(m), int(s)),
+                    time.strftime('[%H:%M:%S]'), promo_count, balance, int(h), int(m), int(s)),
                       False, 1, False, True)
     elif opt == 2:
         print(
-            '1. Накрутка лайков\n2. Накрутка подписчиков\n3. Накрутка подписчиков в группу\n4. Накрутка лайков на запись (бета)',
+            '1. Накрутка лайков\n2. Накрутка подписчиков\n3. Накрутка подписчиков в группу\n4. Накрутка лайков на '
+            'запись\n5. Накрутка лайков на комментарии (тест)',
             color=4, frame=True)
-        type = int(input('--> ', '1234'))
-        if type in {1, 4}:
+        type = int(input('--> ', '12345'))
+        if type in {1, 4, 5}:
             count = input('Сколько лайков накрутить: ', '1234567890')
-            target_id = input('ID человека: ', '1234567890-')
-            arg = input('ID записи/фото: ', '1234567890')
+            target_id = input('ID человека/группы: ', '1234567890-')
+            if type == 5:
+                arg = '%s?reply=%s' % (input('ID записи: ', '1234567890'), input('ID комментария: ', '1234567890'))
+            else:
+                arg = input('ID записи/фото/комментария: ', '1234567890')
         elif type in {2, 3}:
             count = input('Сколько человек накрутить: ', '1234567890')
             target_id = input('ID человека (При накрутке в группу ID заказчика) : ', '1234567890')
             arg = ''
             if type == 3:
                 arg = input('ID группы (без минуса) : ', '1234567890')
-        if force_add(count, target_id, type - 1, arg) is True:
+        print('Выберите пол потенциальных исполнителей\n1. Женский\n2. Мужской\n3. Любой', color=4, frame=True)
+        sex_ = sex[int(input('--> ', '123'))]
+        print('Выберите страну потенциальных исполнителей\n1. Любая\n2. Украина\n3. Россия\n4. Белоруссия\n5. Только '
+              'Москва', color=4, frame=True)
+        country_ = country[int(input('--> ', '12345'))]
+        print('Выберите возраст потенциальных исполнителей\n1. Не имеет значения\n2. До 18 лет\n3. Старше 18 лет', color=4, frame=True)
+        age = int(input('--> ','123')) - 1
+        if force_add(count, target_id, type - 1, arg, sex_, country_,age) is True:
             print('Задание успешно добавлено!', False, 1)
         else:
             print('При добавлении задания произошла ошибка!', False, 0)
@@ -331,7 +367,7 @@ def main_ig():  # Основная функция.
 
 if __name__ == '__main__':
     print('Проверка обновлений......')
-    updater('123.py','https://raw.githubusercontent.com/hottabbe/roboliker/master')
+    updater('123.py', 'https://raw.githubusercontent.com/hottabbe/roboliker/master')
     print('Проверка обновлений API...')
     updater('stdex.py', 'https://raw.githubusercontent.com/hottabbe/stdex/master')
     try:
