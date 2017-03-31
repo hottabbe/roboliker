@@ -290,7 +290,7 @@ def main_vk():  # Основная функция.
     global sex, country
     print('Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления', False,
           4, True, frame=True)
-    opt = int(input('--> ', '1234'))
+    opt = int(input('--> ', '12345'))
     if opt == 1:
         vk_id = input('\nВведите ваш ID ВК: ', '1234567890')
         balance, code, promo_count = auth_user(vk_id)
