@@ -169,7 +169,6 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age = ''
             if t.json()['status'] is True:
                 return True
             else:
-                input(t.text)
                 return False
 
         if activate_order(vk_id, order_id) is True:
@@ -250,8 +249,8 @@ def force_add(count, target_id, type, arg, sex, country,age):
         print('УСПЕШНО!\a', True, 1)
         return True
     else:
-        print('Неудача,повтор попытки.....', True, clr=True, color=0)
-        force_add(count, target_id, type, arg)
+        print('Неудача,попробуйте изменить параметры задания.....', True, clr=True, color=0)
+        enter()
 
 
 def get_orders():
