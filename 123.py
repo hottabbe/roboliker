@@ -225,9 +225,11 @@ def force_add(count, target_id, type, arg, sex, country,age):
     print('2. Получаю промо-код для пользователя ID %s' % vk_id, True, 1)
     vars_ = list(auth_user(vk_id))
     factor = 8
-    if sex == '':
+    if sex != '':
         factor += 1
-    if country == 'All':
+    if country != 'All':
+        factor += 1
+    if age != 0:
         factor += 1
     cycles = int(count) * factor
     print('3. Накручиваю баланс для добавления задания (Необходимо %s коинов)\n' % cycles, True, 1)
@@ -329,9 +331,8 @@ def main_vk():  # Основная функция.
                 arg = input('ID группы (без минуса) : ', '1234567890')
         print('Выберите пол потенциальных исполнителей\n1. Женский\n2. Мужской\n3. Любой', color=4, frame=True)
         sex_ = sex[int(input('--> ', '123'))]
-        print('Выберите страну потенциальных исполнителей\n1. Любая\n2. Украина\n3. Россия\n4. Белоруссия\n5. Только '
-              'Москва', color=4, frame=True)
-        country_ = country[int(input('--> ', '12345'))]
+        print('Выберите страну потенциальных исполнителей\n1. Любая\n2. Украина\n3. Россия\n4. Белоруссия', color=4, frame=True)
+        country_ = country[int(input('--> ', '1234'))]
         print('Выберите возраст потенциальных исполнителей\n1. Не имеет значения\n2. До 18 лет\n3. Старше 18 лет', color=4, frame=True)
         age = int(input('--> ','123')) - 1
         if force_add(count, target_id, type - 1, arg, sex_, country_,age) is True:
