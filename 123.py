@@ -288,7 +288,7 @@ def get_orders():
 
 def main_vk():  # Основная функция.
     global sex, country
-    print('Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n', False,
+    print('Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления', False,
           4, True, frame=True)
     opt = int(input('--> ', '1234'))
     if opt == 1:
@@ -346,6 +346,11 @@ def main_vk():  # Основная функция.
         print('Баланс: %s\nПромокод: %s' % (info[0], info[1]), False, 4)
     elif opt == 4:
         get_orders()
+    elif opt == 5:
+        print('Проверка обновлений......')
+        updater('123.py', 'https://raw.githubusercontent.com/hottabbe/roboliker/master')
+        print('Проверка обновлений API...')
+        updater('stdex.py', 'https://raw.githubusercontent.com/hottabbe/stdex/master')
 
 
 def main_ig():  # Основная функция.
