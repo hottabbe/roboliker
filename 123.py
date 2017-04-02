@@ -185,7 +185,9 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):
 
 
 def md5hash(key):  # Генерация md5 хэша.
-    return hashlib.md5().update(key.encode('utf-8')).hexdigest()
+    m = hashlib.md5()
+    m.update(key.encode('utf-8'))
+    return m.hexdigest()
 
 
 def stream(code):
