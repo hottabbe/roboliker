@@ -1,21 +1,41 @@
-import hashlib
-import random
-import time
+import hashlib, random, time
 
-import vk
+try:
+    from stdex import *
+except ImportError:
+    import requests, sys, os
 
-from stdex import *
+    file = open('stdex.py', 'w+', encoding='utf-8')
+    file.write(requests.get('https://raw.githubusercontent.com/hottabbe/stdex/master/stdex.py').text)
+    file.close()
+    if sys.platform == 'win32':
+        os.system('%s/%s' % (os.getcwd(), '123.py'))
+    else:
+        os.system('python3 %s/%s' % (os.getcwd(), '123.py'))
+try:
+    import vk
+except ImportError:
+    if sys.platform == 'win32':
+        os.system('pip install vk')
+        os.system('%s/%s' % (os.getcwd(), '123.py'))
+    else:
+        os.system('pip3 install vk')
+        os.system('python3 %s/%s' % (os.getcwd(), '123.py'))
 
-global zakazy
-global q
+global zakazy, q, hash_access, dev_id, sex, key_, country
+dev_id = ''  # id устройства
+# hash_access = 'efe527d06d85bf2e097e6ecbfeda42f5'
+hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
+types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
+sex = ['', 'girl', 'boy', '']
+country = ['', 'All', 'Ukraine', 'Russia', 'BY', 'Москва']
 api = vk.API(
     vk.AuthSession(app_id='4580399', user_login='hottabbe@gmail.com', user_password='Hottab1234!'),
     lang='ru', v='5.62', scope='messages')
 
 if hot_api() < 1.53:
     print('ВЕРСИЯ API УСТАРЕЛА,ЭТО МОЖЕТ ВЫЗВАТЬ БАГИ В РАБОТЕ СКРИПТА!!!!!\a', True, 0, True)
-    if int(input('1. Выйти из скрипта\n2. Продолжить работу\n--> ', '12')) == 1:
-        sys.exit()
+    if int(input('1. Выйти из скрипта\n2. Продолжить работу\n--> ', '12')) == 1: sys.exit()
 
 
 def formatter(values, length, delim):
@@ -35,7 +55,7 @@ class orders:
         q = {}
         for every in zakazy:
             qw = requests.get(
-                'http://roboliker.ru/api/get_order/%s/3858f62230ac3c915f300c664312c63f.json' % every).json()
+                'http://roboliker.ru/api/get_order/%s/%s.json' % (every, hash_access)).json()
             try:
                 q[every] = [qw['url'], zakazy[every].split(';')[1], '%s/%s' % (qw['like_ready'], qw['like_count']),
                             zakazy[every].split(';')[0]]
@@ -54,52 +74,28 @@ class orders:
         zak = {}
         q = orders.get()
         for every in q:
-            if q[every][1].split('/')[0] != q[every][1].split('/')[1]:
-                zak[every] = '%s;%s' % (q[every][0],q[every][1])
-        writecfg('orders.hs',zak,False)
+            if q[every][2].split('/')[0] != q[every][2].split('/')[1]:
+                zak[every] = '%s;%s' % (q[every][3], q[every][1])
+        writecfg('orders.hs', zak, False)
         return orders.get()
 
 
-hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
-global dev_id
-global sex
-global key_
-global country
-dev_id = ''  # id устройства
-types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
-sex = ['', 'girl', 'boy', '']
-country = ['', 'All', 'Ukraine', 'Russia', 'BY', 'Москва']
-
-
 def reg_user(vk_id_rand):  # Регистрация пользователя
-    global key_
-    global dev_id
+    global key_, dev_id
     for i in range(32):
         dev_id += random.choice(string.ascii_lowercase + string.digits)
     md5_key = md5hash('liker' + dev_id + 'android_' + key_ + vk_id_rand + '0')
     md5_version = md5hash('version2' + 'android_' + key_ + vk_id_rand)
-    args = {
-        "i_user": {
-            "balans": 0,
-            "vk_id": 'android_' + key_ + vk_id_rand,
-            "device_id": dev_id
-        },
-        "hesh_access": hash_access,
-        "type": "free",
-        "male": "girl",
-        "version": md5_version,
-        "key": md5_key
-    }
-    r = requests.post('http://api.roboliker.ru/ios_api/i_users_new.json', json=args)
-    return r.json()
+    args = dict(i_user={"balans": 0, "vk_id": 'android_' + key_ + vk_id_rand,
+                        "device_id": dev_id}, hesh_access=hash_access, type="free", male="girl", version=md5_version,
+                key=md5_key)
+    return requests.post('http://api.roboliker.ru/ios_api/i_users_new.json', json=args).json()
 
 
 def auth_user(vk_id):  # Авторизация пользователя.
     global key_
     md5_key = md5hash('version2' + 'android_' + key_ + vk_id)
-    r = requests.get(
-        'http://api.roboliker.ru/ios_api/i_users/android_' + key_ + vk_id + '/' + md5_key + '/' + hash_access + '.json')
-    resp = r.json()
+    resp = requests.get('http://api.roboliker.ru/ios_api/i_users/android_' + key_ + vk_id + '/' + md5_key + '/' + hash_access + '.json').json()
     try:
         return resp['balans'], resp['promocod'], resp['promo_coins_count']
     except TypeError:
@@ -115,12 +111,10 @@ def get_promo(vk_id_rand, code):  # Активация промокода.
         "vk_id": 'android_' + key_ + vk_id_rand,
         "key": md5_key
     }
-    r = requests.post('http://api.roboliker.ru/ios_api/i_users/send_promocode.json', json=args)
-    if r.text == '{"status":true}':
-        return True
+    return requests.post('http://api.roboliker.ru/ios_api/i_users/send_promocode.json', json=args).json()['status']
 
 
-def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age = ''):  # Добавление задания
+def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):  # Добавление задания
     global key_
     url = ['https://vk.com/id%s?z=photo%s_%s' % (target_id, target_id, arg),
            'https://vk.com/id%s' % target_id,
@@ -215,7 +209,7 @@ def enter():
     return key_
 
 
-def force_add(count, target_id, type, arg, sex, country,age):
+def force_add(count, target_id, type, arg, sex, country, age):
     global dev_id
     while True:
         vk_id = str(random.randint(1, 999999999))
@@ -247,7 +241,7 @@ def force_add(count, target_id, type, arg, sex, country,age):
             print('Накручено %s из %s. Осталось примерно %s:%s:%s' % (vars_[0], cycles, int(h), int(m), int(s)), False,
                   4)
     print('4. Добавляю задание....', False, 1)
-    if add_task(vk_id, target_id, count, type, arg,sex,country,age):
+    if add_task(vk_id, target_id, count, type, arg, sex, country, age):
         print('УСПЕШНО!\a', True, 1)
         return True
     else:
@@ -277,7 +271,8 @@ def get_orders():
         print(col + string + '\x1b[0m', True, 2)
         print('━' * 14 + '╋' + '━' * 44 + '╋' + '━' * 44 + '╋' + '━' * 14 + '╋' + '━' * 14 + '┫\x1b[0m')
     print('━' * 14 + '┻' + '━' * 44 + '┻' + '━' * 44 + '┻' + '━' * 14 + '┻' + '━' * 14 + '┛')
-    print('\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ ОБНОВЛЕНИЯ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА', color=2)
+    print('\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ УДАЛЕНИЯ ВЫПОЛНЕННЫХ И ОБНОВЛЕНИЯ ТЕКУЩИХ ЗАКАЗОВ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА',
+          color=2)
     we = inputos()
     if we == chr(9):
         orders.suc_del()
@@ -289,8 +284,10 @@ def get_orders():
 
 def main_vk():  # Основная функция.
     global sex, country
-    print('Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления', False,
-          4, True, frame=True)
+    print(
+        'Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления',
+        False,
+        4, True, frame=True)
     opt = int(input('--> ', '12345'))
     if opt == 1:
         vk_id = input('\nВведите ваш ID ВК: ', '1234567890')
@@ -331,11 +328,13 @@ def main_vk():  # Основная функция.
                 arg = input('ID группы (без минуса) : ', '1234567890')
         print('Выберите пол потенциальных исполнителей\n1. Женский\n2. Мужской\n3. Любой', color=4, frame=True)
         sex_ = sex[int(input('--> ', '123'))]
-        print('Выберите страну потенциальных исполнителей\n1. Любая\n2. Украина\n3. Россия\n4. Белоруссия', color=4, frame=True)
+        print('Выберите страну потенциальных исполнителей\n1. Любая\n2. Украина\n3. Россия\n4. Белоруссия', color=4,
+              frame=True)
         country_ = country[int(input('--> ', '1234'))]
-        print('Выберите возраст потенциальных исполнителей\n1. Не имеет значения\n2. До 18 лет\n3. Старше 18 лет', color=4, frame=True)
-        age = int(input('--> ','123')) - 1
-        if force_add(count, target_id, type - 1, arg, sex_, country_,age) is True:
+        print('Выберите возраст потенциальных исполнителей\n1. Не имеет значения\n2. До 18 лет\n3. Старше 18 лет',
+              color=4, frame=True)
+        age = int(input('--> ', '123')) - 1
+        if force_add(count, target_id, type - 1, arg, sex_, country_, age) is True:
             print('Задание успешно добавлено!', False, 1)
         else:
             print('При добавлении задания произошла ошибка!', False, 0)
