@@ -26,18 +26,19 @@ except ImportError:
 
 global zakazy, q, hash_access, dev_id, sex, key_, country
 dev_id = ''  # id устройства
-# hash_access = 'efe527d06d85bf2e097e6ecbfeda42f5'
 hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
 types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
 sex = ['', 'girl', 'boy', '']
 country = ['', 'All', 'Ukraine', 'Russia', 'BY', 'Москва']
 settings = readcfg('settings.cfg')
 if len(settings) == 0:
-    writecfg('settings.cfg',{'login':'','pass':''})
-    print('Логин и пароль  вк не указаны - запускаю конфигуратор',color = 4,frame = True)
+    writecfg('settings.cfg', {'login': '', 'pass': ''})
+    print('Логин и пароль  вк не указаны - запускаю конфигуратор', color=4, frame=True)
     editcfg('settings.cfg')
     settings = readcfg('settings.cfg')
-
+api = vk.API(
+    vk.AuthSession(app_id='4580399', user_login=settings['login'], user_password=settings['pass']),
+    lang='ru', v='5.62', scope='messages')
 if hot_api() < 1.7:
     print('ВЕРСИЯ API УСТАРЕЛА,ЭТО МОЖЕТ ВЫЗВАТЬ БАГИ В РАБОТЕ СКРИПТА!!!!!\a', True, 0, True)
     if int(input('1. Выйти из скрипта\n2. Продолжить работу\n--> ', '12')) == 1: sys.exit()
@@ -54,6 +55,8 @@ def formatter(values, length, delim):
 
 
 class orders:
+    global hash_access
+
     @staticmethod
     def get():
         zakazy = readcfg('orders.hs')
@@ -83,6 +86,37 @@ class orders:
                 zak[every] = '%s;%s' % (q[every][3], q[every][1])
         writecfg('orders.hs', zak, False)
         return orders.get()
+
+    @staticmethod
+    def rem(order_id, cause):
+        global hash_access
+        types = {
+            'like_photo': 'Задание на %s лайков на одну из ваших фото деактивировано.Было выполнено : %s. Причина : %s',
+            'like_post': 'Задание на %s лайков на один из ваших постов деактивировано.Было выполнено : %s. Причина : %s',
+            'like_comment': 'Задание на %s лайков на один из ваших комментариев деактивировано.Было выполнено : %s. Причина : %s',
+            'fun': 'Задание на %s подписчиков деактивировано.Было выполнено : %s. Причина : %s',
+            'group': 'Задание на %s подписчиков в вашу группу деактивировано.Было выполнено : %s. Причина : %s'}
+        try:
+            order = orders.get()[order_id]
+        except KeyError:
+            order = ['vk.com/id214874253','vk.com/id214874253','1/1','fun']
+        args = {'hesh_access': hash_access,
+                'order_id': order_id}
+        r = requests.post('http://api.roboliker.ru/api/destroy_order', json=args).text
+        if r == '{"status":"success"}':
+            print('Заказ с ID %s успешно удален' % order_id, color=1)
+            file = readcfg('orders.hs')
+            file.pop(order_id)
+            writecfg('orders.hs', file, False)
+            try:
+                api.messages.send(user_id=order[1].split('id')[1],
+                                  message=types[order[3]] % (order[2].split('/')[1], order[2], cause))
+                print('    Оповещение о удалении заказа отправлено заказчику!', color=1)
+            except:
+                print('    ЛС заказчика закрыта!', color=0)
+            return True
+        else:
+            return False
 
 
 def reg_user(vk_id_rand):  # Регистрация пользователя
@@ -130,7 +164,7 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):
         'like_photo': ['Задание на %s лайков на эту фотографию активировано! Спасибо за использование . За информацией '
                        'напишите ему : vk.com/hottabbe' % count, 'photo%s_%s' % (target_id, arg)],
         'like_post': ['Задание на %s лайков на этот пост активировано! Спасибо за использование . За информацией '
-                      'напишите ему : vk.com/hottabbe' % count, 'post%s_%s' % (target_id, arg)],
+                      'напишите ему : vk.com/hottabbe' % count, 'wall%s_%s' % (target_id, arg)],
         'like_comment': [
             'Задание на %s лайков на комментарий vk.com/wall%s_%s активировано! Спасибо за использование . За информацией '
             'напишите ему : vk.com/hottabbe' % (count, target_id, arg), ''],
@@ -172,9 +206,6 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):
                 return False
 
         if activate_order(vk_id, order_id) is True:
-            api = vk.API(
-                vk.AuthSession(app_id='4580399', user_login=settings['login'], user_password=settings['pass']),
-                lang='ru', v='5.62', scope='messages')
             try:
                 api.messages.send(user_id=target_id, message=messages[type][0], attachment=messages[type][1])
                 print('    Оповещение о заказе отправлено заказчику!', color=1)
@@ -268,12 +299,26 @@ def get_orders():
         print(col + string + '\x1b[0m', True, 2)
         print('━' * 14 + '╋' + '━' * 44 + '╋' + '━' * 44 + '╋' + '━' * 14 + '╋' + '━' * 14 + '┫\x1b[0m')
     print('━' * 14 + '┻' + '━' * 44 + '┻' + '━' * 44 + '┻' + '━' * 14 + '┻' + '━' * 14 + '┛')
-    print('\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ УДАЛЕНИЯ ВЫПОЛНЕННЫХ И ОБНОВЛЕНИЯ ТЕКУЩИХ ЗАКАЗОВ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА',
-          color=2)
-    we = inputos()
+    print(
+        '\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ УДАЛЕНИЯ ВЫПОЛНЕННЫХ И ОБНОВЛЕНИЯ ТЕКУЩИХ ЗАКАЗОВ\nНАЖМИТЕ BACKSPACE ДЛЯ УДАЛЕНИЯ ЗАКАЗОВ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА',
+        color=2)
+    we = chr(11)
+    while we not in {chr(9),chr(10),chr(127),chr(8)}:
+        we = inputos()
     if we == chr(9):
         orders.suc_del()
         get_orders()
+    elif we == chr(127):
+        order_id = input('Введите ID заказа (в 1 колонке) : ', '1234567890')
+        cause = inputer('\nВведите причину удаления заказа : ')
+        if orders.rem(order_id,cause) is True:
+            orders.suc_del()
+            get_orders()
+        else:
+            print('Не удалось удалить заказ (не верный хеш/заказ не существует)', color=0)
+            time.sleep(3)
+            orders.suc_del()
+            get_orders()
     elif we == chr(10):
         print('', clr=True)
         main_vk()
@@ -349,7 +394,7 @@ def main_vk():  # Основная функция.
         updater('stdex.py', 'https://raw.githubusercontent.com/hottabbe/stdex/master')
     elif opt == 6:
         editcfg('settings.cfg')
-        print('',clr = True)
+        print('', clr=True)
         main_vk()
 
 
