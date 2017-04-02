@@ -1,4 +1,6 @@
-import hashlib, random, time
+import hashlib
+import random
+import time
 
 try:
     from stdex import *
@@ -29,11 +31,14 @@ hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
 types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
 sex = ['', 'girl', 'boy', '']
 country = ['', 'All', 'Ukraine', 'Russia', 'BY', 'Москва']
-api = vk.API(
-    vk.AuthSession(app_id='4580399', user_login='hottabbe@gmail.com', user_password='Hottab1234!'),
-    lang='ru', v='5.62', scope='messages')
+settings = readcfg('settings.cfg')
+if len(settings) == 0:
+    writecfg('settings.cfg',{'login':'','pass':''})
+    print('Логин и пароль  вк не указаны - запускаю конфигуратор',color = 4,frame = True)
+    editcfg('settings.cfg')
+    settings = readcfg('settings.cfg')
 
-if hot_api() < 1.53:
+if hot_api() < 1.7:
     print('ВЕРСИЯ API УСТАРЕЛА,ЭТО МОЖЕТ ВЫЗВАТЬ БАГИ В РАБОТЕ СКРИПТА!!!!!\a', True, 0, True)
     if int(input('1. Выйти из скрипта\n2. Продолжить работу\n--> ', '12')) == 1: sys.exit()
 
@@ -84,8 +89,8 @@ def reg_user(vk_id_rand):  # Регистрация пользователя
     global key_, dev_id
     for i in range(32):
         dev_id += random.choice(string.ascii_lowercase + string.digits)
-    md5_key = md5hash('liker' + dev_id + 'android_' + key_ + vk_id_rand + '0')
-    md5_version = md5hash('version2' + 'android_' + key_ + vk_id_rand)
+    md5_key = md5hash('liker%sandroid_%s%s0' % (dev_id, key_, vk_id_rand))
+    md5_version = md5hash('version2android_%s%s' % (key_, vk_id_rand))
     args = dict(i_user={"balans": 0, "vk_id": 'android_' + key_ + vk_id_rand,
                         "device_id": dev_id}, hesh_access=hash_access, type="free", male="girl", version=md5_version,
                 key=md5_key)
@@ -94,8 +99,9 @@ def reg_user(vk_id_rand):  # Регистрация пользователя
 
 def auth_user(vk_id):  # Авторизация пользователя.
     global key_
-    md5_key = md5hash('version2' + 'android_' + key_ + vk_id)
-    resp = requests.get('http://api.roboliker.ru/ios_api/i_users/android_' + key_ + vk_id + '/' + md5_key + '/' + hash_access + '.json').json()
+    md5_key = md5hash('version2android_%s%s' % (key_, vk_id))
+    resp = requests.get(
+        'http://api.roboliker.ru/ios_api/i_users/android_%s%s/%s/%s.json' % (key_, vk_id, md5_key, hash_access)).json()
     try:
         return resp['balans'], resp['promocod'], resp['promo_coins_count']
     except TypeError:
@@ -104,12 +110,11 @@ def auth_user(vk_id):  # Авторизация пользователя.
 
 def get_promo(vk_id_rand, code):  # Активация промокода.
     global key_
-    md5_key = md5hash('liker' + 'android_' + key_ + vk_id_rand + code)
     args = {
         "hesh_access": hash_access,
         "code": code,
         "vk_id": 'android_' + key_ + vk_id_rand,
-        "key": md5_key
+        "key": md5hash('likerandroid_%s%s%s' % (key_, vk_id_rand, code))
     }
     return requests.post('http://api.roboliker.ru/ios_api/i_users/send_promocode.json', json=args).json()['status']
 
@@ -122,16 +127,17 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):
            'https://vk.com/wall%s_%s' % (target_id, arg),
            'https://vk.com/wall%s_%s' % (target_id, arg)]
     messages = {
-        'like_photo': 'Задание на %s лайков на эту фотографию активировано! Спасибо за использование . За информацией '
-                      'напишите ему : vk.com/hottabbe' % count,
-        'like_post': 'Задание на %s лайков на этот пост активировано! Спасибо за использование . За информацией '
-                     'напишите ему : vk.com/hottabbe' % count,
-        'like_comment': 'Задание на %s лайков на комментарий vk.com/wall%s_%s активировано! Спасибо за использование . За информацией '
-                        'напишите ему : vk.com/hottabbe' % (count, target_id, arg),
-        'fun': 'Задание на %s подписчиков активировано! Спасибо за использование. За информацией напишите ему : '
-               'vk.com/hottabbe' % count,
-        'group': 'Задание на %s подписчиков в группу vk.com/public%s активировано! Спасибо за использование. За '
-                 'информацией напишите ему : vk.com/hottabbe' % (count, arg)}
+        'like_photo': ['Задание на %s лайков на эту фотографию активировано! Спасибо за использование . За информацией '
+                       'напишите ему : vk.com/hottabbe' % count, 'photo%s_%s' % (target_id, arg)],
+        'like_post': ['Задание на %s лайков на этот пост активировано! Спасибо за использование . За информацией '
+                      'напишите ему : vk.com/hottabbe' % count, 'post%s_%s' % (target_id, arg)],
+        'like_comment': [
+            'Задание на %s лайков на комментарий vk.com/wall%s_%s активировано! Спасибо за использование . За информацией '
+            'напишите ему : vk.com/hottabbe' % (count, target_id, arg), ''],
+        'fun': ['Задание на %s подписчиков активировано! Спасибо за использование. За информацией напишите ему : '
+                'vk.com/hottabbe' % count, ''],
+        'group': ['Задание на %s подписчиков в группу vk.com/public%s активировано! Спасибо за использование. За '
+                  'информацией напишите ему : vk.com/hottabbe' % (count, arg), '']}
     url = url[type]
     type = types[type]
     args = {
@@ -166,47 +172,36 @@ def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):
                 return False
 
         if activate_order(vk_id, order_id) is True:
+            api = vk.API(
+                vk.AuthSession(app_id='4580399', user_login=settings['login'], user_password=settings['pass']),
+                lang='ru', v='5.62', scope='messages')
             try:
-                try:
-                    if type.split('_')[1] == 'photo':
-                        api.messages.send(user_id=target_id, message=messages[type],
-                                          attachment='photo%s_%s' % (target_id, arg))
-                    elif type.split('_')[1] == 'post':
-                        api.messages.send(user_id=target_id, message=messages[type],
-                                          attachment='post%s_%s' % (target_id, arg))
-                    elif type.split('_')[1] == 'comment':
-                        api.messages.send(user_id=target_id, message=messages[type])
-                except IndexError:
-                    api.messages.send(user_id=target_id, message=messages[type])
+                api.messages.send(user_id=target_id, message=messages[type][0], attachment=messages[type][1])
+                print('    Оповещение о заказе отправлено заказчику!', color=1)
             except:
-                pass
+                print('    ЛС заказчика закрыта!', color=0)
             orders.add(order=r, tip=type, target='vk.com/id%s' % target_id)
             return True
 
 
 def md5hash(key):  # Генерация md5 хэша.
-    m = hashlib.md5()
-    m.update(key.encode('utf-8'))
-    return m.hexdigest()
+    return hashlib.md5().update(key.encode('utf-8')).hexdigest()
 
 
 def stream(code):
     vk_id_rand = str(random.randint(1, 999999999))
     reg_user(vk_id_rand)
-    if get_promo(vk_id_rand, code) is True:
-        return True
+    return get_promo(vk_id_rand, code)
 
 
 def enter():
     global key_
-    key = int(input('\n\n1 - Вконтакте\n2 - Instagram\n--> ', '12', 1))
-    if key == 1:
+    if int(input('\n\n1 - Вконтакте\n2 - Instagram\n--> ', '12', 1)) == 1:
         key_ = 'vk'
         main_vk()
     else:
         key_ = 'ig'
         main_ig()
-    return key_
 
 
 def force_add(count, target_id, type, arg, sex, country, age):
@@ -285,10 +280,10 @@ def get_orders():
 def main_vk():  # Основная функция.
     global sex, country
     print(
-        'Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления',
+        'Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления\n6. Изменить логин или пароль бота для оповещений',
         False,
         4, True, frame=True)
-    opt = int(input('--> ', '12345'))
+    opt = int(input('--> ', '123456'))
     if opt == 1:
         vk_id = input('\nВведите ваш ID ВК: ', '1234567890')
         balance, code, promo_count = auth_user(vk_id)
@@ -350,6 +345,10 @@ def main_vk():  # Основная функция.
         updater('123.py', 'https://raw.githubusercontent.com/hottabbe/roboliker/master')
         print('Проверка обновлений API...')
         updater('stdex.py', 'https://raw.githubusercontent.com/hottabbe/stdex/master')
+    elif opt == 6:
+        editcfg('settings.cfg')
+        print('',clr = True)
+        main_vk()
 
 
 def main_ig():  # Основная функция.
