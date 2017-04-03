@@ -25,6 +25,8 @@ except ImportError:
         os.system('python3 %s/%s' % (os.getcwd(), '123.py'))
 
 global zakazy, q, hash_access, dev_id, sex, key_, country
+messages = {'create':
+                {}}
 dev_id = ''  # id устройства
 hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
 types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
@@ -99,7 +101,7 @@ class orders:
         try:
             order = orders.get()[order_id]
         except KeyError:
-            order = ['vk.com/id214874253','vk.com/id214874253','1/1','fun']
+            order = ['vk.com/id214874253', 'vk.com/id214874253', '1/1', 'fun']
         args = {'hesh_access': hash_access,
                 'order_id': order_id}
         r = requests.post('http://api.roboliker.ru/api/destroy_order', json=args).text
@@ -117,6 +119,15 @@ class orders:
             return True
         else:
             return False
+
+
+def timer(start, cycles):
+    s = (time.time() - start) * cycles
+    h = '0' * (2 - len(str(int(s // 3600)))) + str(int(s // 3600))
+    s %= 3600
+    m = '0' * (2 - len(str(int(s // 60)))) + str(int(s // 60))
+    s = '0' * (2 - len(str(int(s % 60)))) + str(int(s % 60))
+    return '%s:%s:%s' % (h, m, s)
 
 
 def reg_user(vk_id_rand):  # Регистрация пользователя
@@ -155,7 +166,7 @@ def get_promo(vk_id_rand, code):  # Активация промокода.
 
 def add_task(vk_id, target_id, count, type, arg='', sex='', country='', age=''):  # Добавление задания
     global key_
-    url = ['https://vk.com/id%s?z=photo%s_%s' % (target_id, target_id, arg),
+    url = ['https://vk.com/photo%s_%s' % (target_id, arg),
            'https://vk.com/id%s' % target_id,
            'https://vk.com/public%s' % arg,
            'https://vk.com/wall%s_%s' % (target_id, arg),
@@ -261,13 +272,8 @@ def force_add(count, target_id, type, arg, sex, country, age):
         time_ = time.time()
         if stream(vars_[1]):
             vars_[0] += vars_[2]
-            s = (time.time() - time_) * ((cycles - vars_[0]) / 30)
-            h = s // 3600
-            s %= 3600
-            m = s // 60
-            s %= 60
-            print('Накручено %s из %s. Осталось примерно %s:%s:%s' % (vars_[0], cycles, int(h), int(m), int(s)), False,
-                  4)
+            print('    Накручено %s из %s. Осталось примерно %s' % (vars_[0], cycles, timer(time_, (cycles - vars_[0]) / 30)),
+                  False,4)
     print('4. Добавляю задание....', False, 1)
     if add_task(vk_id, target_id, count, type, arg, sex, country, age):
         print('УСПЕШНО!\a', True, 1)
@@ -303,7 +309,7 @@ def get_orders():
         '\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ УДАЛЕНИЯ ВЫПОЛНЕННЫХ И ОБНОВЛЕНИЯ ТЕКУЩИХ ЗАКАЗОВ\nНАЖМИТЕ BACKSPACE ДЛЯ УДАЛЕНИЯ ЗАКАЗОВ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА',
         color=2)
     we = chr(11)
-    while we not in {chr(9),chr(10),chr(127),chr(8)}:
+    while we not in {chr(9), chr(10), chr(127), chr(8)}:
         we = inputos()
     if we == chr(9):
         orders.suc_del()
@@ -311,7 +317,7 @@ def get_orders():
     elif we == chr(127):
         order_id = input('Введите ID заказа (в 1 колонке) : ', '1234567890')
         cause = inputer('\nВведите причину удаления заказа : ')
-        if orders.rem(order_id,cause) is True:
+        if orders.rem(order_id, cause) is True:
             orders.suc_del()
             get_orders()
         else:
@@ -324,12 +330,55 @@ def get_orders():
         main_vk()
 
 
+def params(type, count, target_id, arg, sex_, country_, age):
+    coes = {'All': ['1','Любая'],
+            'Ukraine': ['2','Украина'],
+            'Russia': ['3','Россия'],
+            'BY': ['4','Белоруссия']}
+    _sex = {'girl': ['1','Женский'],
+            'boy': ['2','Мужской'],
+            '': ['3','Любой']}
+    ages = ['Любой', '< 18 лет', '> 18 лет']
+    pars = ['', '', '', '', '', '', '']
+    if type == 1:
+        pars[0] = 'photo%s_%s' % (target_id, arg)
+    elif type == 2:
+        pars[0] = 'id%s' % target_id
+    elif type == 3:
+        pars[0] = 'public%s' % arg
+    elif type in {4, 5}:
+        pars[0] = 'wall%s_%s' % (target_id, arg)
+    pars[1] = '%s ( ~ %s)' % (count, int(int(count) * 0.76))
+    pars[2] = coes[country_][1]
+    pars[3] = _sex[sex_][1]
+    pars[4] = ages[int(age) - 1]
+    fact = random.randint(180, 240)
+    if type in {1, 4, 5}:
+        fact += random.randint(30, 60)
+        money = 15
+    else:
+        fact -= random.randint(10, 40)
+        money = 25
+    if coes[country_][0] != '1':
+        fact -= random.randint(10, 25)
+        money += 5
+    if age != '1':
+        fact -= random.randint(15, 25)
+        money += 5
+    if _sex[sex_][0] != '3':
+        money += 2
+    money -= 0.5 * (int(count) // 1000)
+    money = [money,money * int(int(count) * 0.76) / 100]
+    pars[5] = '~ %s дней' % round(int(count) / fact, 1)
+    pars[6] = '%s рублей ( %s руб за 100 человек )' % (money[1],money[0])
+    return pars
+
+
 def main_vk():  # Основная функция.
     global sex, country
     print(
         'Меню:\n1. Накрутка баланса\n2. Добавить задание\n3. Информация о пользователе\n4. Список заказов\n5. Проверить обновления\n6. Изменить логин или пароль бота для оповещений',
-        False,
-        4, True, frame=True)
+        False, 4, True, frame=True)
     opt = int(input('--> ', '123456'))
     if opt == 1:
         vk_id = input('\nВведите ваш ID ВК: ', '1234567890')
@@ -341,13 +390,8 @@ def main_vk():  # Основная функция.
             time_ = time.time()
             if stream(code) is True:
                 balance += promo_count
-                s = (time.time() - time_) * (cycles - i)
-                h = s // 3600
-                s = s % 3600
-                m = s // 60
-                s = s % 60
-                print('%s +%s монет. Текущий баланс %s монет. Осталось примерно %s:%s:%s    ' % (
-                    time.strftime('[%H:%M:%S]'), promo_count, balance, int(h), int(m), int(s)),
+                print('%s +%s монет. Текущий баланс %s монет. Осталось примерно %s' % (
+                    time.strftime('[%H:%M:%S]'), promo_count, balance, timer(time_, cycles - i)),
                       False, 1, False, True)
     elif opt == 2:
         print(
@@ -376,6 +420,13 @@ def main_vk():  # Основная функция.
         print('Выберите возраст потенциальных исполнителей\n1. Не имеет значения\n2. До 18 лет\n3. Старше 18 лет',
               color=4, frame=True)
         age = int(input('--> ', '123')) - 1
+        param = params(type, count, target_id, arg, sex_, country_, age)
+        print('Вы выбрали следующие параметры для накрутки:\nСсылка : https://vk.com/%s \nТребуемое кол-во '
+              'исполнителей: %s\nСтрана исполнителей: %s\nПол исполнителей: %s\nВозраст исполнителей: %s\nПримерное '
+              'время выполнения задания: %s\nРекомендуемая цена: %s' % (
+              param[0], param[1], param[2], param[3], param[4], param[5], param[6]), True, color=5, clr=False,
+              frame=True)
+        input('ENTER для продолжения....', '')
         if force_add(count, target_id, type - 1, arg, sex_, country_, age) is True:
             print('Задание успешно добавлено!', False, 1)
         else:
