@@ -25,8 +25,6 @@ except ImportError:
         os.system('python3 %s/%s' % (os.getcwd(), '123.py'))
 
 global zakazy, q, hash_access, dev_id, sex, key_, country
-messages = {'create':
-                {}}
 dev_id = ''  # id устройства
 hash_access = '3858f62230ac3c915f300c664312c63f'  # 'foobar'
 types = ['like_photo', 'fun', 'group', 'like_post', 'like_comment']
