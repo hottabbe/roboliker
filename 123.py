@@ -329,13 +329,13 @@ def get_orders():
 
 
 def params(type, count, target_id, arg, sex_, country_, age):
-    coes = {'All': ['1','Любая'],
-            'Ukraine': ['2','Украина'],
-            'Russia': ['3','Россия'],
-            'BY': ['4','Белоруссия']}
-    _sex = {'girl': ['1','Женский'],
-            'boy': ['2','Мужской'],
-            '': ['3','Любой']}
+    coes = {'All': 'Любая',
+            'Ukraine': 'Украина',
+            'Russia': 'Россия',
+            'BY': 'Белоруссия'}
+    _sex = {'girl': 'Женский',
+            'boy': 'Мужской',
+            '': 'Любой'}
     ages = ['Любой', '< 18 лет', '> 18 лет']
     pars = ['', '', '', '', '', '', '']
     if type == 1:
@@ -347,9 +347,9 @@ def params(type, count, target_id, arg, sex_, country_, age):
     elif type in {4, 5}:
         pars[0] = 'wall%s_%s' % (target_id, arg)
     pars[1] = '%s ( ~ %s)' % (count, int(int(count) * 0.76))
-    pars[2] = coes[country_][1]
-    pars[3] = _sex[sex_][1]
-    pars[4] = ages[int(age) - 1]
+    pars[2] = coes[country_]
+    pars[3] = _sex[sex_]
+    pars[4] = ages[int(age)]
     fact = random.randint(180, 240)
     if type in {1, 4, 5}:
         fact += random.randint(30, 60)
@@ -357,13 +357,13 @@ def params(type, count, target_id, arg, sex_, country_, age):
     else:
         fact -= random.randint(10, 40)
         money = 25
-    if coes[country_][0] != '1':
+    if coes[country_] != 'Любая':
         fact -= random.randint(10, 25)
         money += 5
-    if age != '1':
+    if int(age) != 0:
         fact -= random.randint(15, 25)
         money += 5
-    if _sex[sex_][0] != '3':
+    if _sex[sex_] != 'Любой':
         money += 2
     money -= 0.5 * (int(count) // 1000)
     money = [money,money * int(int(count) * 0.76) / 100]
