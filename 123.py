@@ -285,24 +285,24 @@ def get_orders():
     print('ПОДОЖДИТЕ,ИДЕТ ГЕНЕРАЦИЯ СПИСКА ЗАКАЗОВ...............', frame=True, color=4, clr=True)
     zakaz = orders.get()
     for every in zakaz:
-        zakaz[every] = formatter(zakaz[every], [45, 45, 15, 15], '┃')
-    head = formatter(['ID заказа', 'Ссылка на заказ', 'Заказчик', 'Выполнено', 'Тип заказа'], [15, 45, 45, 15, 15], '┃')
+        zakaz[every] = formatter(zakaz[every], [40, 20, 10, 12], '┃')
+    head = formatter(['ID заказа', 'Ссылка на заказ', 'Заказчик', 'Выполнено', 'Тип заказа'], [10, 40, 20, 10, 12], '┃')
     string = ''
     for every in head:
         string += every
     print(string, False, 5, True)
-    print('━' * 14 + '╋' + '━' * 44 + '╋' + '━' * 44 + '╋' + '━' * 14 + '╋' + '━' * 14 + '┫')
+    print('━' * 9 + '╋' + '━' * 39 + '╋' + '━' * 19 + '╋' + '━' * 9 + '╋' + '━' * 11 + '┫')
     for every in zakaz:
         if zakaz[every][2].split('/')[1].split(' ')[0] == zakaz[every][2].split('/')[0]:
             col = '\x1b[42m'
         elif zakaz[every][2].split('/')[1] != zakaz[every][2].split('/')[0]:
             col = '\x1b[41m'
-        string = formatter([every], [15], '┃')[0]
+        string = formatter([every], [10], '┃')[0]
         for ever in zakaz[every]:
             string += ever
         print(col + string + '\x1b[0m', True, 2)
-        print('━' * 14 + '╋' + '━' * 44 + '╋' + '━' * 44 + '╋' + '━' * 14 + '╋' + '━' * 14 + '┫\x1b[0m')
-    print('━' * 14 + '┻' + '━' * 44 + '┻' + '━' * 44 + '┻' + '━' * 14 + '┻' + '━' * 14 + '┛')
+        print('━' * 9 + '╋' + '━' * 39 + '╋' + '━' * 19 + '╋' + '━' * 9 + '╋' + '━' * 11 + '┫\x1b[0m')
+    print('━' * 9 + '┻' + '━' * 39 + '┻' + '━' * 19 + '┻' + '━' * 9 + '┻' + '━' * 11 + '┛')
     print(
         '\n\n\n\n\n\nНАЖМИТЕ TAB ДЛЯ УДАЛЕНИЯ ВЫПОЛНЕННЫХ И ОБНОВЛЕНИЯ ТЕКУЩИХ ЗАКАЗОВ\nНАЖМИТЕ BACKSPACE ДЛЯ УДАЛЕНИЯ ЗАКАЗОВ\nНАЖМИТЕ ENTER ДЛЯ ВЫХОДА',
         color=2)
