@@ -466,9 +466,9 @@ def main_ig():  # Основная функция.
 
 if __name__ == '__main__':
     print('Проверка обновлений......')
-    updater('123.py', 'https://raw.githubusercontent.com/hottabbe/roboliker/master')
+    updater('123.py', 'https://bitbucket.org/Hottabbe/main/raw/809069ea558e12e06adcc83a707b637ff37a7faa')
     print('Проверка обновлений API...')
-    updater('stdex.py', 'https://raw.githubusercontent.com/hottabbe/stdex/master')
+    updater('stdex.py', 'https://bitbucket.org/Hottabbe/main/raw/809069ea558e12e06adcc83a707b637ff37a7faa')
     try:
         print('Приложение для накрутки баланса в приложении Мой Рейтинг в ВК\n'
               'https://play.google.com/store/apps/details?id=ru.like.vs', True, random.randint(0, 9), frame=True)
